@@ -1,0 +1,4 @@
+BasedOnStyle: Microsoft
+
+# Breaks precompiled headers
+SortIncludes: Never

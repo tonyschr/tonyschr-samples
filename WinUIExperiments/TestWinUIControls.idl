@@ -1,0 +1,14 @@
+namespace TestWinUIControls
+{
+  enum TestMode
+  {
+    TestMode_WebView2,
+    TestMode_InteropCompositor
+  };
+
+  runtimeclass WindowlessHostControl : Microsoft.UI.Xaml.Controls.ContentControl
+  {
+    WindowlessHostControl();
+    void RetargetWindow(TestMode testMode, UInt64 rootWindow, UInt64 hostedWindow);
+  }  
+}

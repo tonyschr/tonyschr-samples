@@ -1,0 +1,12 @@
+<StackPanel 
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  Background="#aaaaff">
+    <Border BorderBrush="Blue" BorderThickness="2" Margin="5" Padding="5" CornerRadius="3" >
+      <TextBlock TextWrapping="Wrap" FontSize="12">This is a basic XAML island</TextBlock>
+    </Border>
+    <StackPanel x:Name="testParent" BorderBrush="Green" BorderThickness="2" Margin="5" Padding="5">
+      <TextBlock TextWrapping="Wrap" FontSize="12">Hi</TextBlock>
+    </StackPanel>
+</StackPanel>

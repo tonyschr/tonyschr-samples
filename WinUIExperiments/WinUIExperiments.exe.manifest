@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
+	<assemblyIdentity version="1.0.0.0" name="WinUIExperiments"/>
+	<compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+		<application>
+			<!-- Required for XAML hosting. Must be 10.0.18362.0 or later. -->
+			<maxversiontested Id="10.0.18362.0"/>
+			<!-- Windows 10, Windows 11, Windows Server 2016, Windows Server 2019 and Windows Server 2022 -->
+			<!-- Needed for newer OS functionality such as DwmSetWindowAttribute(..., DWMWA_CLOAK, ...); -->
+			<supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}"/>
+		</application>
+	</compatibility>
+</assembly>
