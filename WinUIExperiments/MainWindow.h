@@ -24,8 +24,7 @@ class MainWindow
     LRESULT OnSize(int width, int height);
 
     // Test cases
-    void TestWebView2StlyeInterop();
-    void TestInteropCompositor();
+    void Test_ContentExternalOutputLink();
 
     HWND m_hwnd{nullptr};
     XamlIsland m_island;

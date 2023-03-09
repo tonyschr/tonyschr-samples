@@ -4,7 +4,6 @@
 
 namespace winrt::TestWinUIControls::implementation
 {
-
 WindowlessHostControl::WindowlessHostControl()
 {
     InitializeDirectComposition();
@@ -109,11 +108,7 @@ void WindowlessHostControl::DestroyDCompositionDevice()
     m_dcompDevice = nullptr;
 }
 
-winrt::Compositor WindowlessHostControl::Compositor()
-{
-    return winrt::ElementCompositionPreview::GetElementVisual(*this).Compositor();
-}
-
+// Add an element to size the container and aid in hit testing.
 void WindowlessHostControl::AddChildPanel()
 {
     m_mainContent = winrt::Grid();
@@ -130,109 +125,41 @@ void WindowlessHostControl::CreateHostedVisual()
     SetWindowLongPtr(m_hostedWindow, GWL_EXSTYLE, WS_EX_LAYERED);
     SetLayeredWindowAttributes(m_hostedWindow, RGB(0, 0, 255), 255, LWA_ALPHA);
 
-    // Reparent and cloak. For debugging purposes this is optional.
-    if (m_xamlIslandWindow)
-    {
-        SetParent(m_hostedWindow, m_xamlIslandWindow);
-        SetWindowLongPtr(m_hostedWindow, GWL_STYLE, WS_VISIBLE | WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
-        BOOL cloak = TRUE;
-        winrt::check_hresult(DwmSetWindowAttribute(m_hostedWindow, DWMWA_CLOAK, &cloak, sizeof(cloak)));
-    }
-
+    // Reparent and cloak. Uncomment to hide the original HWND while still using the visual.
+    //if (m_xamlIslandWindow)
+    //{         
+    //    SetParent(m_hostedWindow, m_xamlIslandWindow);
+    //    SetWindowLongPtr(m_hostedWindow, GWL_STYLE, WS_VISIBLE | WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
+    //    BOOL cloak = TRUE;
+    //    winrt::check_hresult(DwmSetWindowAttribute(m_hostedWindow, DWMWA_CLOAK, &cloak, sizeof(cloak)));
+    //}
+    
     winrt::com_ptr<IUnknown> retargetedWindowSurface;
-    winrt::check_hresult(m_dcompDevice->CreateSurfaceFromHwnd(m_hostedWindow, retargetedWindowSurface.put()));
-    winrt::check_hresult(m_dcompDevice->CreateVisual(m_hostedVisual.put()));
-    winrt::check_hresult(m_hostedVisual->SetContent(retargetedWindowSurface.get()));
-}
+    HRESULT hr = m_dcompDevice->CreateSurfaceFromHwnd(m_hostedWindow, retargetedWindowSurface.put());
+    assert(SUCCEEDED(hr));
 
-// From: https://github.com/microsoft/microsoft-ui-xaml/blob/main/dev/WebView2/WebView2.cpp
-//
-//  void WebView2::CreateAndSetVisual()
-//  {
-//    if (!m_visual)
-//    {
-//      m_visual = winrt::Window::Current().Compositor().CreateSpriteVisual();
-//    }
-//    UpdateDefaultVisualBackgroundColor();
-//
-//    SetCoreWebViewAndVisualSize(static_cast<float>(ActualWidth()), static_cast<float>(ActualHeight()));
-//
-//    winrt::ElementCompositionPreview::SetElementChildVisual(*this, m_visual);
-//
-//    auto coreWebView2CompositionControllerInterop =
-//    m_coreWebViewCompositionController.as<ICoreWebView2CompositionControllerInterop>();
-//    winrt::check_hresult(coreWebView2CompositionControllerInterop->put_RootVisualTarget(m_visual.as<::IUnknown>().get()));
-//  }
+    hr = m_dcompDevice->CreateVisual(m_hostedVisual.put());
+    assert(SUCCEEDED(hr));
 
-// This code does what the WebView2 team mentioned put_RootVisualTarget does internally.
-void WindowlessHostControl::Test_TryInteropWebView2Style()
-{
-    assert(m_spriteVisual); // Microsoft.UI.Composition::SpriteVisual
-    assert(m_hostedVisual); // IDCompositionVisual2, created using DCompositionCreateDevice3
-
-    auto target = m_spriteVisual.try_as<IDCompositionTarget>();
-    assert(target); // FAILS. QI'ing a WinUI3 visual for IDCompositionTarget returns E_NOINTERFACE
-
-    target->SetRoot(m_hostedVisual.get());
-
-    // Assuming this is needed. Also, do we need a commit on the underlying WinUI 3 device?
-    m_dcompDevice->Commit();
-}
-
-// Try to use the WinUI3 compositor as IDCompositionDesktopDevice, which is internally
-// is known as dcompi!Microsoft::UI::Composition::InteropCompositor based on the vtable.
-//
-// This is based on a conceptual idea that we could use an the container visual created
-// here as a bridge between WinUI visuals and IDCompositionVisual visuals.
-void WindowlessHostControl::Test_TryInteropCompositor()
-{
-    assert(m_spriteVisual); // Microsoft.UI.Composition::SpriteVisual
-    assert(m_hostedVisual); // IDCompositionVisual2, created using DCompositionCreateDevice3
-
-    auto interopDevice = Compositor().try_as<IDCompositionDesktopDevice>();
-    assert(interopDevice);
-
-    winrt::com_ptr<IDCompositionVisual2> interopContainerVisual;
-    winrt::check_hresult(interopDevice->CreateVisual(interopContainerVisual.put()));
-
-    HRESULT hrAddVisual = interopContainerVisual->AddVisual(m_hostedVisual.get(), TRUE, nullptr);
-    assert(SUCCEEDED(hrAddVisual)); // FAILS. E_NOINTERFACE.
-
-    auto winui3Visual = interopContainerVisual.try_as<winrt::Visual>();
-    assert(winui3Visual);
-
-    m_spriteVisual.Children().InsertAtTop(winui3Visual);
-
-    // Assuming this is needed. Also, do we need a commit on the underlying WinUI 3 device?
-    m_dcompDevice->Commit();
+    hr = m_hostedVisual->SetContent(retargetedWindowSurface.get());
+    assert(SUCCEEDED(hr));
 }
 
 void WindowlessHostControl::SetHostedVisual()
 {
-    // Modeled after WebView2, we use a SpriteVisual as the contaimer visual.
-    // For debugging, we give it a color and initial size.
-    m_spriteVisual = Compositor().CreateSpriteVisual();
-    m_spriteVisual.Brush(Compositor().CreateColorBrush({255, 0, 255, 0}));
-    m_spriteVisual.Size({300, 300});
+    m_outputLink = winrt::Microsoft::UI::Content::ContentExternalOutputLink::Create(ElementCompositor());
+    winrt::com_ptr<IDCompositionTarget> target = m_outputLink.as<IDCompositionTarget>();
 
-    switch (m_testMode)
-    {
-    case TestMode::TestMode_WebView2:
-        Test_TryInteropWebView2Style();
-        break;
+    HRESULT hr = target->SetRoot(m_hostedVisual.get());
+    assert(SUCCEEDED(hr));
 
-    case TestMode::TestMode_InteropCompositor:
-        Test_TryInteropCompositor();
-        break;
-    }
+    winrt::float2 size{400, 300};
+    m_outputLink.PlacementVisual().Size(size);
+    winrt::ElementCompositionPreview::SetElementChildVisual(*this, m_outputLink.PlacementVisual());
 
-    winrt::ElementCompositionPreview::SetElementChildVisual(*this, m_spriteVisual);
-
-    // ISSUE: Note that depending on initialization order and other vagaries, width
-    // and height might not be known yet.
-    //
-    // WORKAROUND: Manually resize the main window.
-    SetHostedVisualSize(static_cast<float>(ActualWidth()), static_cast<float>(ActualHeight()));
+    // Hard-coding the size for now since during early init we don't seem to always
+    // have an initial size yet in WinUI 3.
+    SetHostedVisualSize(400, 301); // ISSUE: Why can't this be exactly 300 when window is cloaked?
 }
 
 void WindowlessHostControl::SetHostedVisualSize(float width, float height)
@@ -242,25 +169,19 @@ void WindowlessHostControl::SetHostedVisualSize(float width, float height)
 
     if (m_hostedWindow && m_xamlIslandWindow)
     {
-        // For input, accessibility, and IMEs we need the hidden input window to
-        // match the position and dimensions of the visual in the XAML tree.
         winrt::GeneralTransform transform = TransformToVisual(nullptr);
         auto top_left = transform.TransformPoint(winrt::Windows::Foundation::Point(0, 0));
         SetWindowPos(m_hostedWindow, HWND_TOP, std::lroundf(top_left.X * m_rasterizationScale),
                      std::lroundf(top_left.Y * m_rasterizationScale), std::lroundf(scaled_width),
                      std::lroundf(scaled_height), SWP_SHOWWINDOW);
-
-        // WORKAROUND: Toggle cloak to update the bounds of the content in m_hostedVisual.
-        BOOL cloak = FALSE;
-        DwmSetWindowAttribute(m_hostedWindow, DWMWA_CLOAK, &cloak, sizeof(cloak));
-        cloak = TRUE;
-        DwmSetWindowAttribute(m_hostedWindow, DWMWA_CLOAK, &cloak, sizeof(cloak));
     }
 
-    D2D_RECT_F clip{0.0f, 0.0f, scaled_width, scaled_height};
-    m_hostedVisual->SetClip(clip);
-
     m_dcompDevice->Commit();
+}
+
+winrt::Compositor WindowlessHostControl::ElementCompositor()
+{
+    return winrt::ElementCompositionPreview::GetElementVisual(*this).Compositor();
 }
 
 } // namespace winrt::TestWinUIControls::implementation

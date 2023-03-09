@@ -23,9 +23,6 @@ struct WindowlessHostControl : WindowlessHostControlT<WindowlessHostControl>
     // For sizing/testing use a grid where we can set the bounds.
     winrt::Grid m_mainContent = winrt::Grid{nullptr};
 
-    // WinUI3 Visual for testing, and as a potential parent container visual.
-    winrt::SpriteVisual m_spriteVisual{nullptr};
-
     // "Classic" DComp visual created using DCompositionCreateDevice3, with
     // the content set from CreateSurfaceFromHwnd.
     winrt::com_ptr<IDCompositionVisual2> m_hostedVisual;
@@ -39,13 +36,12 @@ struct WindowlessHostControl : WindowlessHostControlT<WindowlessHostControl>
 
     winrt::com_ptr<IDCompositionDesktopDevice> m_dcompDevice;
 
+    winrt::Microsoft::UI::Content::IContentExternalOutputLink m_outputLink;
+
     void AddChildPanel();
     void CreateHostedVisual();
     void SetHostedVisual();
     void SetHostedVisualSize(float width, float height);
-
-    void Test_TryInteropWebView2Style();
-    void Test_TryInteropCompositor();
 
     void InitializeDirectComposition();
     void CreateD3D11Device();
@@ -57,7 +53,7 @@ struct WindowlessHostControl : WindowlessHostControlT<WindowlessHostControl>
     void CreateDCompositionDevice();
     void DestroyDCompositionDevice();
 
-    winrt::Compositor Compositor();
+    winrt::Compositor ElementCompositor();
 };
 
 } // namespace winrt::TestWinUIControls::implementation

@@ -3,8 +3,7 @@
 #include "HostedWindow.h"
 #include "WindowlessHostControl.h"
 
-const int MENUITEM_TEST_WEBVIEW2 = 5000;
-const int MENUITEM_TEST_INTEROP_COMPOSITOR = 5001;
+const int MENUITEM_TEST_EXTERNAL_OUTPUT_LINK = 5000;
 
 void MainWindow::Create()
 {
@@ -40,10 +39,8 @@ HMENU MainWindow::CreateMainMenu()
 {
     HMENU menu = CreateMenu();
     HMENU testCases = CreatePopupMenu();
-    AppendMenu(testCases, MF_STRING, MENUITEM_TEST_WEBVIEW2,
-               L"WinUI3 / DComp Test: WebView2 style interop to link visuals");
-    AppendMenu(testCases, MF_STRING, MENUITEM_TEST_INTEROP_COMPOSITOR,
-               L"WinUI3 / DComp Test: Interop compositor investigation");
+    AppendMenu(testCases, MF_STRING, MENUITEM_TEST_EXTERNAL_OUTPUT_LINK,
+               L"WinUI3 / DComp Test: Test WinUI3 Exernal Output Link");
     AppendMenu(menu, MF_POPUP, reinterpret_cast<UINT_PTR>(testCases), L"Test Cases");
 
     return menu;
@@ -103,13 +100,8 @@ LRESULT CALLBACK MainWindow::WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
     case WM_COMMAND: {
         switch (LOWORD(wParam))
         {
-        case MENUITEM_TEST_WEBVIEW2:
-            TestWebView2StlyeInterop();
-            handled = true;
-            break;
-
-        case MENUITEM_TEST_INTEROP_COMPOSITOR:
-            TestInteropCompositor();
+        case MENUITEM_TEST_EXTERNAL_OUTPUT_LINK:
+            Test_ContentExternalOutputLink();
             handled = true;
             break;
         }
@@ -151,7 +143,7 @@ LRESULT MainWindow::OnSize(int width, int height)
     return 0;
 }
 
-void MainWindow::TestWebView2StlyeInterop()
+void MainWindow::Test_ContentExternalOutputLink()
 {
     if (!m_hostedWindow.GetWindow())
     {
@@ -161,22 +153,7 @@ void MainWindow::TestWebView2StlyeInterop()
     winrt::TestWinUIControls::WindowlessHostControl windowlessHost;
     m_island.AddTestElement(windowlessHost);
 
-    windowlessHost.RetargetWindow(winrt::TestWinUIControls::TestMode::TestMode_WebView2,
-                                  reinterpret_cast<uint64_t>(m_island.GetIslandWindow()),
-                                  reinterpret_cast<uint64_t>(m_hostedWindow.GetWindow()));
-}
-
-void MainWindow::TestInteropCompositor()
-{
-    if (!m_hostedWindow.GetWindow())
-    {
-        m_hostedWindow.Create();
-    }
-
-    winrt::TestWinUIControls::WindowlessHostControl windowlessHost;
-    m_island.AddTestElement(windowlessHost);
-
-    windowlessHost.RetargetWindow(winrt::TestWinUIControls::TestMode::TestMode_InteropCompositor,
+    windowlessHost.RetargetWindow(winrt::TestWinUIControls::TestMode::TestMode_ContentExternalOutputLink,
                                   reinterpret_cast<uint64_t>(m_island.GetIslandWindow()),
                                   reinterpret_cast<uint64_t>(m_hostedWindow.GetWindow()));
 }

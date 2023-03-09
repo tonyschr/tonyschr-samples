@@ -2,8 +2,7 @@ namespace TestWinUIControls
 {
   enum TestMode
   {
-    TestMode_WebView2,
-    TestMode_InteropCompositor
+    TestMode_ContentExternalOutputLink
   };
 
   runtimeclass WindowlessHostControl : Microsoft.UI.Xaml.Controls.ContentControl
